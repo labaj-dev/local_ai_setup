@@ -1,0 +1,210 @@
+# Local AI Coding Setup (Podman + Ollama + SearXNG + Cline)
+
+Fully local, free, open-source AI coding assistant with private web search.
+No Docker Desktop, no cloud API keys, no accounts required.
+
+**Stack:**
+- **Podman** — container runtime (no Docker Desktop license needed)
+- **SearXNG** — self-hosted, private metasearch engine (no account, no tracking)
+- **Ollama** — runs the local LLM
+- **Cline** — VS Code extension, AI coding agent
+
+---
+
+## 1. Install Podman
+
+```bash
+brew install podman podman-compose
+podman machine init --cpus 4 --memory 4096 --disk-size 60
+podman machine start
+```
+
+Verify:
+```bash
+podman ps
+```
+Should return an empty table with no errors.
+
+> If you get `machine "podman-machine-default" already exists`, just run
+> `podman machine start` — it's already created, nothing more to do.
+
+---
+
+## 2. Set Up SearXNG
+
+Create a project folder and save the compose file below as `docker-compose.yml` inside it:
+
+```bash
+mkdir -p ~/ai-search && cd ~/ai-search
+```
+
+**`docker-compose.yml`:**
+```yaml
+services:
+  searxng:
+    container_name: searxng
+    image: docker.io/searxng/searxng:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"   # localhost-only, not reachable from your network
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    environment:
+      - SEARXNG_BASE_URL=http://localhost:8080/
+      - UWSGI_WORKERS=4
+      - UWSGI_THREADS=4
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "1"
+```
+
+Start it:
+```bash
+podman-compose up -d
+```
+
+This generates `searxng/settings.yml` on first run. JSON output is disabled by
+default — enable it by adding this to the bottom of `searxng/settings.yml`:
+
+```yaml
+search:
+  formats:
+    - html
+    - json
+```
+
+Restart to apply:
+```bash
+podman-compose restart searxng
+```
+
+Test:
+```bash
+curl "http://localhost:8080/search?q=test&format=json"
+```
+Should return JSON, not a 403 error.
+
+**Security note:** the `127.0.0.1:8080:8080` binding above restricts SearXNG to
+your machine only — verify with `lsof -nP -iTCP:8080 -sTCP:LISTEN`, which
+should show `127.0.0.1:8080`, not `*:8080`.
+
+---
+
+## 3. Install Ollama and Pull a Model
+
+```bash
+brew install ollama
+ollama --version   # confirm 0.30+ for MLX acceleration on Apple Silicon
+```
+
+Pull a coding model with reliable tool-calling support:
+```bash
+ollama pull qwen3-coder:30b
+```
+
+> **Model note:** Gemma 4 has a known, ecosystem-wide bug where it emits
+> malformed tool calls in agent/tool-use scenarios (across Ollama, llama.cpp,
+> vLLM). Qwen3-Coder and Qwen2.5-Coder do not have this issue — stick to the
+> Qwen-Coder family for anything involving tool calling / agent mode.
+
+If 30B is too slow/heavy for your machine, `qwen2.5-coder:14b` is a solid,
+lighter fallback with reliable tool calling.
+
+---
+
+## 4. Install Cline (VS Code Extension)
+
+1. In VS Code: Extensions (`Cmd+Shift+X`) → search **Cline** → Install
+2. Click the Cline icon in the sidebar
+3. Skip any sign-up/account prompt — click the settings gear icon directly
+   instead of the primary "Sign in" button
+4. Set **API Provider** to `Ollama`
+5. Set **Base URL** to `http://localhost:11434`
+6. Select `qwen3-coder:30b` from the model dropdown
+7. Test with: *"list the files in this project and explain what it does"*
+
+> **Known bug:** Cline + Ollama + Qwen-Coder can occasionally loop on tool
+> calls due to a JSON/XML format mismatch. Fix: create a `.clinerules` file
+> in your project root containing:
+> ```
+> Always format tool calls using Cline's native XML tool-call syntax, never JSON.
+> ```
+
+---
+
+## 5. (Optional) Give Cline Web Search via SearXNG
+
+Cline supports MCP servers. In Cline's settings → MCP Servers, add:
+
+```json
+{
+  "mcpServers": {
+    "searxng": {
+      "command": "npx",
+      "args": ["-y", "searxng-mcp-ts@latest"],
+      "env": {
+        "SEARXNG_URL": "http://localhost:8080"
+      }
+    }
+  }
+}
+```
+
+SearXNG (from step 2) must be running for this to work.
+
+---
+
+## Daily Use
+
+After a reboot, you need:
+```bash
+podman machine start
+cd ~/ai-search && podman-compose up -d
+```
+Then just open VS Code and use Cline normally — Ollama runs as a background
+service once installed and doesn't need manual starting.
+
+---
+## Security Setup (Optional but Recommended)
+
+For enhanced security, you can use the included scripts to manage your SearXNG secret key in macOS Keychain:
+
+1. Run the setup script to generate and store a secure key:
+   ```bash
+   ./searxng-keychain-setup.sh
+   ```
+
+2. To manage your key later, use:
+   ```bash
+   # Show current key
+   ./searxng-keychain-usage.sh show
+   
+   # Generate new key
+   ./searxng-keychain-usage.sh reset
+   
+   # Remove key from Keychain (optional)
+   ./searxng-keychain-usage.sh remove
+   ```
+
+3. The scripts will automatically load the key into your environment when you run them.
+
+---
+
+## Troubleshooting Quick Reference
+
+| Symptom | Likely cause |
+|---|---|
+| SearXNG returns 403 on `format=json` | JSON not enabled in `settings.yml` — see step 2 |
+| Cline/Ollama returns blank responses in Agent mode | Model has a tool-calling bug — switch to Qwen-Coder family |
+| Tool calls loop forever | JSON/XML mismatch — add the `.clinerules` fix in step 4 |
+| Everything feels slow | Check `ollama --version` is 0.30+; free up RAM (close Podman if unused); try a smaller model |
+| `pip install` fails with "externally-managed-environment" | Not relevant to this stack — we use Homebrew/Ollama directly, no Python venvs needed |
