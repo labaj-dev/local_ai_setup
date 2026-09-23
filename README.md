@@ -30,62 +30,28 @@ Should return an empty table with no errors.
 
 ---
 
-## 2. Set Up SearXNG
+## 2. Clone This Repo and Start SearXNG
 
-Create a project folder and save the compose file below as `docker-compose.yml` inside it:
+Everything needed — `docker-compose.yml`, the SearXNG config with JSON output
+already enabled, and a one-command startup script — is in this repo. No files
+to hand-copy.
 
 ```bash
-mkdir -p ~/ai-search && cd ~/ai-search
+git clone git@github.com:labaj-dev/local_ai_setup.git
+cd local_ai_setup
 ```
 
-**`docker-compose.yml`:**
-```yaml
-services:
-  searxng:
-    container_name: searxng
-    image: docker.io/searxng/searxng:latest
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:8080:8080"   # localhost-only, not reachable from your network
-    volumes:
-      - ./searxng:/etc/searxng:rw
-    environment:
-      - SEARXNG_BASE_URL=http://localhost:8080/
-      - UWSGI_WORKERS=4
-      - UWSGI_THREADS=4
-    cap_drop:
-      - ALL
-    cap_add:
-      - CHOWN
-      - SETGID
-      - SETUID
-      - DAC_OVERRIDE
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "1m"
-        max-file: "1"
-```
+(Optional but recommended) generate a secret key and store it in macOS
+Keychain instead of running with an empty one — see
+[Security Setup](#security-setup-optional-but-recommended) below, then come
+back here.
 
-Start it:
+Start everything:
 ```bash
-podman-compose up -d
+./start.sh
 ```
-
-This generates `searxng/settings.yml` on first run. JSON output is disabled by
-default — enable it by adding this to the bottom of `searxng/settings.yml`:
-
-```yaml
-search:
-  formats:
-    - html
-    - json
-```
-
-Restart to apply:
-```bash
-podman-compose restart searxng
-```
+This starts the Podman machine if it isn't running and brings up SearXNG via
+`podman-compose`.
 
 Test:
 ```bash
@@ -93,9 +59,10 @@ curl "http://localhost:8080/search?q=test&format=json"
 ```
 Should return JSON, not a 403 error.
 
-**Security note:** the `127.0.0.1:8080:8080` binding above restricts SearXNG to
-your machine only — verify with `lsof -nP -iTCP:8080 -sTCP:LISTEN`, which
-should show `127.0.0.1:8080`, not `*:8080`.
+**Security note:** the `127.0.0.1:8080:8080` binding in `docker-compose.yml`
+restricts SearXNG to your machine only — verify with
+`lsof -nP -iTCP:8080 -sTCP:LISTEN`, which should show `127.0.0.1:8080`, not
+`*:8080`.
 
 ---
 
@@ -165,10 +132,9 @@ SearXNG (from step 2) must be running for this to work.
 
 ## Daily Use
 
-After a reboot, you need:
+After a reboot, from this repo's folder:
 ```bash
-podman machine start
-cd ~/ai-search && podman-compose up -d
+./start.sh
 ```
 Then just open VS Code and use Cline normally — Ollama runs as a background
 service once installed and doesn't need manual starting.
@@ -203,7 +169,7 @@ For enhanced security, you can use the included scripts to manage your SearXNG s
 
 | Symptom | Likely cause |
 |---|---|
-| SearXNG returns 403 on `format=json` | JSON not enabled in `settings.yml` — see step 2 |
+| SearXNG returns 403 on `format=json` | `searxng/settings.yml` got overwritten/reset — confirm it still lists `json` under `search.formats` |
 | Cline/Ollama returns blank responses in Agent mode | Model has a tool-calling bug — switch to Qwen-Coder family |
 | Tool calls loop forever | JSON/XML mismatch — add the `.clinerules` fix in step 4 |
 | Everything feels slow | Check `ollama --version` is 0.30+; free up RAM (close Podman if unused); try a smaller model |

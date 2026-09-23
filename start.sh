@@ -1,6 +1,6 @@
 #!/bin/bash
-# One-command startup for the SearXNG + Continue setup.
-# Run this from anywhere: ~/ai-search/start.sh
+# One-command startup for this repo's SearXNG stack.
+# Run this from anywhere: /path/to/local_ai_setup/start.sh
 
 set -e
 
@@ -19,6 +19,5 @@ fi
 echo "==> Starting SearXNG..."
 podman-compose up -d
 
-echo "==> Starting the Continue bridge server..."
-echo "==> Leave this window open. Press Ctrl+C to stop everything when you're done."
-python3 searxng_bridge.py
+echo "==> SearXNG is up at http://localhost:8080"
+echo "==> Ollama runs as a background service — open VS Code and use Cline."
