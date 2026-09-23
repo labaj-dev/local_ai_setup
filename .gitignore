@@ -11,3 +11,11 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Application data
+open-webui/cache/
+open-webui/vector_db/
+open-webui/webui.db
+open-webui/webui.db-shm
+open-webui/webui.db-wal
+ollama/

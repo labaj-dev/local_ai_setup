@@ -1,4 +1,4 @@
-# Local AI Coding Setup (Podman + Ollama + SearXNG + Cline)
+# Local AI Coding Setup (Podman + Ollama + SearXNG + Cline + Open Web UI)
 
 Fully local, free, open-source AI coding assistant with private web search.
 No Docker Desktop, no cloud API keys, no accounts required.
@@ -9,6 +9,7 @@ No Docker Desktop, no cloud API keys, no accounts required.
 - **SearXNG** — self-hosted, private metasearch engine (no account, no tracking)
 - **Ollama** — runs the local LLM
 - **Cline** — VS Code extension, AI coding agent
+- **Open Web UI** — web interface for interacting with Ollama
 
 ---
 
@@ -151,6 +152,15 @@ Cline supports MCP servers. In Cline's settings → MCP Servers, add:
 ```
 
 SearXNG (from step 2) must be running for this to work.
+
+---
+
+## 5. (Optional) Open Web UI
+
+Open Web UI provides a web interface for interacting with Ollama models:
+
+1. Access Open Web UI at `http://localhost:8081`
+2. The interface automatically connects to your existing Ollama instance at `http://localhost:11434`
 
 ---
 
