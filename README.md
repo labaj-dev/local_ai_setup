@@ -4,6 +4,7 @@ Fully local, free, open-source AI coding assistant with private web search.
 No Docker Desktop, no cloud API keys, no accounts required.
 
 **Stack:**
+- **Brew (Mac OS only)** - package manager used for mac os
 - **Podman** — container runtime (no Docker Desktop license needed)
 - **SearXNG** — self-hosted, private metasearch engine (no account, no tracking)
 - **Ollama** — runs the local LLM
@@ -11,23 +12,45 @@ No Docker Desktop, no cloud API keys, no accounts required.
 
 ---
 
-## 1. Install Podman
+## 1. Install Prerequisites
 
+### Mac OS installation
+#### Brew and Python 3
+Verify that you have brew installed by following the instructions on https://brew.sh. Once it's installed, update it and install Python.
+
+```bash
+brew update
+brew install python
+```
+
+#### Podman
 ```bash
 brew install podman podman-compose
 podman machine init --cpus 4 --memory 4096 --disk-size 60
 podman machine start
 ```
 
-Verify:
+Verify the machine is running and that it has at least 4 CPUs and 4096 MB of RAM:
 ```bash
-podman ps
+podman ps                 # Shows if the machine is running
+podman machine inspect    # Shows the CPU and memory settings
 ```
 Should return an empty table with no errors.
 
 > If you get `machine "podman-machine-default" already exists`, just run
 > `podman machine start` — it's already created, nothing more to do.
 
+### Fedora 44+ installation
+
+#### Install Python
+```bash
+sudo dnf install python3 python3-pip python3-devel
+```
+
+#### Install Podman
+```bash
+sudo dnf install podman podman-compose
+```
 ---
 
 ## 2. Clone This Repo and Start SearXNG
@@ -50,8 +73,8 @@ Start everything:
 ```bash
 ./start.sh
 ```
-This starts the Podman machine if it isn't running and brings up SearXNG via
-`podman-compose`.
+On macOS this starts the Podman machine if it isn't running. On every OS it
+then brings up SearXNG via `podman-compose`.
 
 Test:
 ```bash
@@ -90,14 +113,15 @@ lighter fallback with reliable tool calling.
 
 ## 4. Install Cline (VS Code Extension)
 
-1. In VS Code: Extensions (`Cmd+Shift+X`) → search **Cline** → Install
+1. In VS Code: Extensions (`Cmd+Shift+X` or `Ctrl+Shift+X`) → search **Cline** → Install
 2. Click the Cline icon in the sidebar
 3. Skip any sign-up/account prompt — click the settings gear icon directly
    instead of the primary "Sign in" button
-4. Set **API Provider** to `Ollama`
-5. Set **Base URL** to `http://localhost:11434`
-6. Select `qwen3-coder:30b` from the model dropdown
-7. Test with: *"list the files in this project and explain what it does"*
+4. Select **Bring my own API key**
+5. Set **API Provider** to `Ollama`
+6. Check **Use custom base URL** and set the URL to `http://localhost:11434`
+7. Select `qwen3-coder:30b` from the model dropdown
+8. Test with: *"list the files in this project and explain what it does"*
 
 > **Known bug:** Cline + Ollama + Qwen-Coder can occasionally loop on tool
 > calls due to a JSON/XML format mismatch. Fix: create a `.clinerules` file

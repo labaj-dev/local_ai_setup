@@ -4,9 +4,9 @@ services:
     image: docker.io/searxng/searxng:latest
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8080:8080"   # only reachable from your Mac, not the network
+      - "127.0.0.1:8080:8080"   # only reachable from this machine, not the network
     volumes:
-      - ./searxng:/etc/searxng:rw
+      - ./searxng:/etc/searxng:rw,z
     environment:
       - SEARXNG_BASE_URL=http://localhost:8080/
       - UWSGI_WORKERS=4
