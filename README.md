@@ -182,6 +182,11 @@ After a reboot, from this repo's folder:
 Then just open VS Code and use Cline normally — Ollama runs as a background
 service once installed and doesn't need manual starting.
 
+To shut down the services at any time:
+```bash
+./stop.sh
+```
+
 ---
 ## Security Setup (Optional but Recommended)
 
