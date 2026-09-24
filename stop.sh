@@ -1,5 +1,5 @@
 #!/bin/bash
-# One-command shutdown for this repo's SearXNG stack.
+# One-command shutdown for this repo's SearXNG and OpenWebUI.
 # Run this from anywhere: /path/to/local_ai_setup/stop.sh
 
 set -e
