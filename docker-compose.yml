@@ -23,3 +23,28 @@ services:
       options:
         max-size: "1m"
         max-file: "1"
+
+  open-webui:
+    container_name: open-webui
+    image: ghcr.io/open-webui/open-webui:main
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8081:8080"   # only reachable from this machine, on 8081 to avoid clashing with SearXNG
+    volumes:
+      - ./open-webui:/app/backend/data:rw,z
+    environment:
+      # Resolves to the host on both macOS (Podman VM) and Linux (see docker-compose.linux.yml).
+      - OLLAMA_BASE_URL=http://host.containers.internal:11434
+      - WEBUI_NAME=Local AI
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "1"

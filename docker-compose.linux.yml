@@ -1,0 +1,9 @@
+# Linux-only override, applied automatically by start.sh.
+#
+# Ollama listens on 127.0.0.1 only. On Linux a container can't reach the
+# host's loopback by default, so map it in via pasta. This lets Open WebUI
+# reach Ollama without exposing Ollama to your network (no OLLAMA_HOST=0.0.0.0).
+# Not needed on macOS, where Podman's VM already routes host.containers.internal.
+services:
+  open-webui:
+    network_mode: "pasta:--map-host-loopback,169.254.1.2"

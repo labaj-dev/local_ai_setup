@@ -11,3 +11,9 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Application data
+# NOTE: the entire `open-webui/` directory is ignored to prevent accidental
+# inclusion of user uploads, secrets, and local chat data.
+open-webui/
+ollama/

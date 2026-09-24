@@ -19,13 +19,20 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     fi
 fi
 
-echo "==> Starting SearXNG..."
-podman-compose up -d
+# Linux needs an extra override so Open WebUI can reach Ollama on the host.
+COMPOSE_FILES=(-f docker-compose.yml)
+if [[ "$OSTYPE" != "darwin"* ]]; then
+    COMPOSE_FILES+=(-f docker-compose.linux.yml)
+fi
+
+echo "==> Starting SearXNG and Open WebUI..."
+podman-compose "${COMPOSE_FILES[@]}" up -d
 
 echo "==> Waiting for SearXNG to respond..."
 for _ in $(seq 1 30); do
     if curl -s -o /dev/null http://localhost:8080; then
         echo "==> SearXNG is up at http://localhost:8080"
+        echo "==> Open WebUI is at http://localhost:8081 (first start can take a minute)"
         echo "==> Ollama runs as a background service — open VS Code and use Cline."
         exit 0
     fi
