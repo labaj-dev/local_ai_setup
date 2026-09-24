@@ -155,12 +155,21 @@ SearXNG (from step 2) must be running for this to work.
 
 ---
 
-## 5. (Optional) Open Web UI
+## 6. (Optional) Open Web UI
 
-Open Web UI provides a web interface for interacting with Ollama models:
+Open Web UI is a browser chat interface for your Ollama models. `./start.sh`
+starts it alongside SearXNG (the first start pulls a large image and can take
+a few minutes).
 
-1. Access Open Web UI at `http://localhost:8081`
-2. The interface automatically connects to your existing Ollama instance at `http://localhost:11434`
+1. Open `http://localhost:8081` and create the local admin account.
+2. Pick a model from the dropdown. It talks to the Ollama instance already
+   running on your machine (`http://localhost:11434`).
+
+Your chats and uploads live in `./open-webui/`, which is git-ignored.
+
+On Linux, `./start.sh` also applies `docker-compose.linux.yml`, which lets the
+container reach Ollama on the host's loopback without exposing Ollama to your
+network. On macOS the Podman VM handles this on its own.
 
 ---
 
