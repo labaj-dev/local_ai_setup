@@ -13,9 +13,7 @@ __pycache__/
 Thumbs.db
 
 # Application data
-open-webui/cache/
-open-webui/vector_db/
-open-webui/webui.db
-open-webui/webui.db-shm
-open-webui/webui.db-wal
+# NOTE: the entire `open-webui/` directory is ignored to prevent accidental
+# inclusion of user uploads, secrets, and local chat data.
+open-webui/
 ollama/

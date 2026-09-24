@@ -35,5 +35,3 @@ services:
     environment:
       - OLLAMA_BASE_URL=http://host.docker.internal:11434
       - WEBUI_NAME=Local AI
-    depends_on:
-      - searxng
