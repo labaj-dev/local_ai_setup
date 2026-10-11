@@ -15,6 +15,14 @@ No Docker Desktop, no cloud API keys, no accounts required.
 
 ## 1. Install Prerequisites
 
+**Shortcut:** on macOS or Linux (dnf/apt), `./setup.sh` does steps 1, 3 and the
+Cline install in one go (Podman, podman-compose, Ollama, a model, and the
+VS Code extension). It detects your CPU, RAM and GPU, suggests a model that
+fits, and lets you pick one with the Up/Down keys and Enter. Set
+`OLLAMA_MODEL=qwen2.5-coder:14b` to skip the menu, or `SKIP_MODEL=1` /
+`SKIP_CLINE=1` to skip those parts. The manual steps below
+are the same thing, step by step.
+
 ### Mac OS installation
 #### Brew and Python 3
 Verify that you have brew installed by following the instructions on https://brew.sh. Once it's installed, update it and install Python.
