@@ -13,6 +13,40 @@ No Docker Desktop, no cloud API keys, no accounts required.
 
 ---
 
+## Automated checks (GitHub Actions)
+
+The **CI** workflow runs on pushes and pull requests. You can also run it from
+the repository's **Actions → CI → Run workflow** page after the workflow is on
+the default branch. No repository secrets or cloud API keys are required.
+
+- **macOS and Linux script checks:** Bash syntax plus isolated tests for setup
+  skip flags, Podman machine handling, platform-specific Compose arguments,
+  startup failures, shutdown, and Keychain commands. External commands are
+  mocked; these tests do not install packages or start services.
+- **macOS Keychain:** a real create/update/show/reset/remove lifecycle, restricted
+  to the GitHub runner and an explicitly selected temporary keychain. The test
+  does not change the default keychain or print generated keys.
+- **Linux container smoke test:** validates both Compose configurations, starts
+  the actual SearXNG service, checks its home page and JSON search endpoint,
+  collects logs on failure, and cleans up the containers.
+
+Run the safe script tests locally from the repository directory:
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+The local tests use Python's standard library and Bash; they do not access your
+real Keychain, container runtime, package manager, or Ollama installation.
+
+**Coverage limits:** this is not a full macOS installation test. CI does not run
+the real prerequisite installer, a macOS Podman VM, Open WebUI database setup,
+Ollama inference/model downloads, or the VS Code/Cline UI. Linux Compose override
+validation checks configuration only, not its host-loopback networking at
+runtime. Those paths still need an end-to-end test on suitable hardware.
+
+---
+
 ## 1. Install Prerequisites
 
 **Shortcut:** on macOS or Linux (dnf/apt), `./setup.sh` does steps 1, 3 and the

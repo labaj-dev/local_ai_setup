@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scripts:
+    name: Script checks (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Check Bash syntax
+        run: |
+          while IFS= read -r script; do
+            bash -n "$script"
+          done < <(git ls-files '*.sh')
+      - name: Test scripts with isolated command mocks
+        run: python3 -m unittest discover -s tests -v
+      - name: Test macOS Keychain in an isolated keychain
+        if: runner.os == 'macOS'
+        run: bash tests/keychain-ci.sh
+
+  searxng:
+    name: SearXNG container smoke test (Linux)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Install container test prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman podman-compose
+      - name: Validate Compose configurations
+        run: |
+          podman-compose -f docker-compose.yml config > /dev/null
+          podman-compose -f docker-compose.yml -f docker-compose.linux.yml config > /dev/null
+      - name: Start SearXNG
+        run: podman-compose -f docker-compose.yml up -d searxng
+      - name: Check HTTP and JSON endpoints
+        run: python3 tests/searxng-smoke.py
+      - name: Container diagnostics on failure
+        if: failure()
+        run: |
+          podman ps -a
+          podman logs searxng || true
+      - name: Clean up containers
+        if: always()
+        run: podman-compose -f docker-compose.yml down
